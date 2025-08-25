@@ -1,144 +1,279 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <title>Quiz: Kenmerkende Aspecten & Tijdvakken</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quiz: Kenmerkende Aspecten ↔ Tijdvakken</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f9;
-      text-align: center;
-      padding: 20px;
+    :root{
+      --bg:#0b1020; --card:#121a33; --muted:#9fb0d1; --text:#ecf3ff; --accent:#6ee7b7; --bad:#fda4af; --good:#86efac; --warn:#fde68a;
     }
-    .quiz-box {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      max-width: 600px;
-      margin: auto;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    button {
-      display: block;
-      width: 100%;
-      margin: 8px 0;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #0077cc;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    button:hover {
-      background: #005fa3;
-    }
-    #feedback {
-      margin-top: 15px;
-      font-weight: bold;
-    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif; background:linear-gradient(160deg,#0b1020 0%,#0f1a3a 60%,#15224d 100%); color:var(--text);}
+    header{position:sticky; top:0; z-index:10; backdrop-filter:saturate(120%) blur(6px); background:rgba(11,16,32,.6); border-bottom:1px solid #1d2a55}
+    .wrap{max-width:1100px; margin:0 auto; padding:20px}
+    h1{font-size:clamp(1.3rem,2.2vw,2rem); margin:.3rem 0}
+    p.lead{color:var(--muted); margin:.2rem 0 1rem 0}
+    .controls{display:grid; gap:.6rem; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); align-items:end}
+    .card{background:var(--card); border:1px solid #223061; border-radius:16px; padding:14px}
+    label{font-weight:600; font-size:.95rem}
+    select,input[type="number"]{width:100%; padding:.6rem .7rem; background:#0e1530; color:var(--text); border:1px solid #2a3a71; border-radius:10px}
+    button{cursor:pointer; border:1px solid #3750a8; background:#1a2b66; color:var(--text); padding:.7rem 1rem; border-radius:12px; font-weight:700}
+    button:hover{filter:brightness(1.08)}
+    button.secondary{background:#14224d}
+    .quiz{margin:18px 0; display:grid; gap:12px}
+    .q{background:#0f1836; border:1px solid #24346f; border-radius:14px; padding:14px}
+    .q h3{margin:0 0 .4rem 0; font-size:1rem}
+    .meta{font-size:.8rem; color:var(--muted)}
+    .row{display:grid; gap:.5rem; grid-template-columns:1fr 220px}
+    .row select{align-self:start}
+    .chip{display:inline-block; padding:.2rem .5rem; border-radius:999px; font-size:.75rem; border:1px solid #33468f; color:#c4d5ff}
+    .result{margin-top:12px; font-weight:700}
+    .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+    .summary{position:sticky; bottom:0; background:rgba(18,26,51,.9); border-top:1px solid #213063; padding:10px 14px; display:flex; gap:10px; align-items:center; justify-content:space-between}
+    .summary .score{font-size:1rem}
+    details{margin-top:.4rem}
+    .kv{display:flex; flex-wrap:wrap; gap:6px}
+    .kv .kv-item{padding:.25rem .55rem; border-radius:10px; border:1px dashed #2b3d7e; font-size:.78rem}
+    .correct{border-color:#3fae6c; background:rgba(63,174,108,.12)}
+    .incorrect{border-color:#c45262; background:rgba(196,82,98,.12)}
+    .hidden{display:none}
+    .footer{opacity:.7; font-size:.8rem; margin-top:10px}
+    @media (max-width:680px){ .row{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
-  <div class="quiz-box">
-    <h2>Koppel het kenmerkende aspect aan het juiste tijdvak</h2>
-    <p id="question"></p>
-    <div id="options"></div>
-    <p id="feedback"></p>
-    <button onclick="nextQuestion()">Volgende vraag</button>
-    <p id="score"></p>
-  </div>
+  <header>
+    <div class="wrap">
+      <h1>Quiz: koppel het <em>Kenmerkende Aspect</em> aan het juiste <em>Tijdvak</em></h1>
+      <p class="lead">Kies per vraag het tijdvak. Standaard krijg je 12 willekeurige vragen uit alle 49 aspecten. Veel succes! ✨</p>
+      <div class="controls">
+        <div class="card">
+          <label for="amount">Aantal vragen</label>
+          <input id="amount" type="number" min="5" max="49" value="12" />
+        </div>
+        <div class="card">
+          <label for="filter">Beperk tot tijdvak (optioneel)</label>
+          <select id="filter">
+            <option value="">— Alle tijdvakken —</option>
+          </select>
+        </div>
+        <div class="card" style="display:flex; gap:.6rem; align-items:end">
+          <button id="start">Start nieuwe quiz</button>
+          <button id="showAnswers" class="secondary" title="Toon voor elke vraag het juiste antwoord">Toon antwoorden</button>
+          <button id="reset" class="secondary">Wis keuzes</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="quiz" class="quiz" aria-live="polite"></section>
+    <div class="summary hidden" id="summary">
+      <div class="score" id="score">–/– goed</div>
+      <div>
+        <button id="check">Nakijken</button>
+        <button id="retry" class="secondary">Nieuwe set</button>
+      </div>
+    </div>
+
+    <details class="card" style="margin-top:18px">
+      <summary><strong>Overzicht tijdvakken (1–10)</strong></summary>
+      <div class="kv" id="tvList"></div>
+    </details>
+
+    <p class="footer">Tip: publiceer dit bestand rechtstreeks op GitHub Pages. Het heeft geen externe scripts nodig.</p>
+  </main>
 
   <script>
-    const questions = [
-      {
-        aspect: "De levenswijze van jagers-verzamelaars",
-        answer: "Tijdvak 1: Jagers en Boeren"
-      },
-      {
-        aspect: "De opkomst van handel en ambacht die de basis legde voor het herleven van een agrarisch-urbane samenleving",
-        answer: "Tijdvak 4: Steden en Staten"
-      },
-      {
-        aspect: "De wetenschappelijke revolutie",
-        answer: "Tijdvak 6: Regenten en Vorsten"
-      },
-      {
-        aspect: "De industriële revolutie die in de westerse wereld de basis legde voor een industriële samenleving",
-        answer: "Tijdvak 8: Burgers en Stoommachines"
-      },
-      {
-        aspect: "Het voeren van twee wereldoorlogen",
-        answer: "Tijdvak 9: De Wereldoorlogen"
-      },
-      {
-        aspect: "De ontwikkeling van het jodendom en het christendom als de eerste monotheïstische godsdiensten",
-        answer: "Tijdvak 2: Grieken en Romeinen"
-      },
-      {
-        aspect: "De eenwording van Europa",
-        answer: "Tijdvak 10: Televisie en Computer"
-      }
+    /* ===== Data ===== */
+    const TIJDVAKKEN = [
+      {id:1, naam:'Tijd van Jagers en Boeren (tot 3000 v.Chr.)'},
+      {id:2, naam:'Tijd van Grieken en Romeinen (3000 v.Chr.–500 n.Chr.)'},
+      {id:3, naam:'Tijd van Monniken en Ridders (500–1000)'},
+      {id:4, naam:'Tijd van Steden en Staten (1000–1500)'},
+      {id:5, naam:'Tijd van Ontdekkers en Hervormers (1500–1600)'},
+      {id:6, naam:'Tijd van Regenten en Vorsten (1600–1700)'},
+      {id:7, naam:'Tijd van Pruiken en Revoluties (1700–1800)'},
+      {id:8, naam:'Tijd van Burgers en Stoommachines (1800–1900)'},
+      {id:9, naam:'Tijd van de Wereldoorlogen (1900–1950)'},
+      {id:10, naam:'Tijd van Televisie en Computer (1950–heden)'}
     ];
 
-    const tijdvakken = [
-      "Tijdvak 1: Jagers en Boeren",
-      "Tijdvak 2: Grieken en Romeinen",
-      "Tijdvak 3: Monniken en Ridders",
-      "Tijdvak 4: Steden en Staten",
-      "Tijdvak 5: Ontdekkers en Hervormers",
-      "Tijdvak 6: Regenten en Vorsten",
-      "Tijdvak 7: Pruiken en Revoluties",
-      "Tijdvak 8: Burgers en Stoommachines",
-      "Tijdvak 9: De Wereldoorlogen",
-      "Tijdvak 10: Televisie en Computer"
+    // Officiële 49 Kenmerkende Aspecten met tijdvaknummer
+    const ASPECTEN = [
+      {tv:1, a:'De levenswijze van jagers-verzamelaars'},
+      {tv:1, a:'Het ontstaan van landbouw en landbouwsamenlevingen'},
+      {tv:1, a:'Het ontstaan van de eerste stedelijke gemeenschappen'},
+
+      {tv:2, a:'De ontwikkeling van wetenschappelijk denken en het denken over burgerschap en politiek in de Griekse stadstaat'},
+      {tv:2, a:'De klassieke vormentaal van de Grieks-Romeinse cultuur'},
+      {tv:2, a:'De groei van het Romeinse imperium waardoor de Grieks-Romeinse cultuur zich in Europa verspreidde'},
+      {tv:2, a:'De confrontatie tussen de Grieks-Romeinse cultuur en de Germaanse cultuur van Noordwest-Europa'},
+      {tv:2, a:'De ontwikkeling van het jodendom en het christendom als de eerste monotheïstische godsdiensten'},
+
+      {tv:3, a:'De verspreiding van het christendom in geheel Europa'},
+      {tv:3, a:'Het ontstaan en de verspreiding van de islam'},
+      {tv:3, a:'De vrijwel volledige vervanging in West-Europa van de agrarisch-urbane cultuur door een zelfvoorzienende agrarische cultuur, georganiseerd via hofstelsel en horigheid'},
+      {tv:3, a:'Het ontstaan van feodale verhoudingen in het bestuur'},
+
+      {tv:4, a:'De opkomst van handel en ambacht die de basis legde voor het herleven van een agrarisch-urbane samenleving'},
+      {tv:4, a:'De opkomst van de stedelijke burgerij en de toenemende zelfstandigheid van steden'},
+      {tv:4, a:'Het begin van staatsvorming en centralisatie'},
+      {tv:4, a:'Het conflict in de christelijke wereld over de vraag of de wereldlijke dan wel de geestelijke macht het primaat behoorde te hebben'},
+      {tv:4, a:'De expansie van de christelijke wereld naar buiten toe, onder andere in de vorm van kruistochten'},
+
+      {tv:5, a:'Het begin van de Europese overzeese expansie'},
+      {tv:5, a:'Het veranderende mens- en wereldbeeld van de renaissance en het begin van een nieuwe wetenschappelijke belangstelling'},
+      {tv:5, a:'De hernieuwde oriëntatie op het erfgoed van de klassieke oudheid'},
+      {tv:5, a:'De protestantse Reformatie die de splitsing van de christelijke kerk in West-Europa tot gevolg had'},
+      {tv:5, a:'Het conflict in de Nederlanden dat resulteerde in de stichting van een Nederlandse staat'},
+
+      {tv:6, a:'Het streven van vorsten naar absolute macht'},
+      {tv:6, a:'De bijzondere plaats in staatkundig opzicht en de bloei in economisch en cultureel opzicht van de Nederlandse Republiek'},
+      {tv:6, a:'Wereldwijde handelscontacten, handelskapitalisme en het begin van een wereldeconomie'},
+      {tv:6, a:'De wetenschappelijke revolutie'},
+
+      {tv:7, a:'Rationeel optimisme en verlicht denken dat werd toegepast op alle terreinen van de samenleving: godsdienst, politiek, economie en sociale verhoudingen'},
+      {tv:7, a:'Voortbestaan van het ancien régime met pogingen om het vorstelijk bestuur op eigentijdse verlichte wijze vorm te geven (verlicht absolutisme)'},
+      {tv:7, a:'Uitbouw van de Europese overheersing, met name in de vorm van plantagekoloniën en de daarmee verbonden trans-Atlantische slavenhandel, en de opkomst van het abolitionisme'},
+      {tv:7, a:'De democratische revoluties in westerse landen met als gevolg discussies over grondwetten, grondrechten en staatsburgerschap'},
+
+      {tv:8, a:'De industriële revolutie die in de westerse wereld de basis legde voor een industriële samenleving'},
+      {tv:8, a:'Discussies over de sociale kwestie'},
+      {tv:8, a:'De moderne vorm van imperialisme die verband hield met de industrialisatie'},
+      {tv:8, a:'De opkomst van emancipatiebewegingen'},
+      {tv:8, a:'Voortschrijdende democratisering, met deelname van steeds meer mannen en vrouwen aan het politieke proces'},
+      {tv:8, a:'De opkomst van politiek-maatschappelijke stromingen: liberalisme, nationalisme, socialisme, confessionalisme en feminisme'},
+
+      {tv:9, a:'De rol van moderne propaganda- en communicatiemiddelen en vormen van massaorganisatie'},
+      {tv:9, a:'Het in praktijk brengen van de totalitaire ideologieën communisme en fascisme/nationaalsocialisme'},
+      {tv:9, a:'De crisis van het wereldkapitalisme'},
+      {tv:9, a:'Het voeren van twee wereldoorlogen'},
+      {tv:9, a:'Racisme en discriminatie die leidden tot genocide, in het bijzonder op de joden'},
+      {tv:9, a:'De Duitse bezetting van Nederland'},
+      {tv:9, a:'Verwoestingen op niet eerder vertoonde schaal door massavernietigingswapens en de betrokkenheid van de burgerbevolking bij oorlogvoering'},
+      {tv:9, a:'Vormen van verzet tegen het West-Europese imperialisme'},
+
+      {tv:10, a:'De dekolonisatie die een eind maakte aan de westerse hegemonie in de wereld'},
+      {tv:10, a:'De verdeling van de wereld in twee ideologische blokken in de greep van een wapenwedloop en de daaruit voortvloeiende dreiging van een atoomoorlog (Koude Oorlog)'},
+      {tv:10, a:'De toegenomen welvaart die vanaf de jaren 1960 in de westerse wereld aanleiding gaf tot ingrijpende sociaal-culturele veranderingsprocessen'},
+      {tv:10, a:'De eenwording van Europa'},
+      {tv:10, a:'De ontwikkeling van pluriforme en multiculturele samenlevingen'}
     ];
 
-    let current = 0;
-    let score = 0;
+    /* ===== Utils ===== */
+    const $(sel, root=document) => root.querySelector(sel);
+    const $all = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const shuffle = arr => arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]);
 
-    function loadQuestion() {
-      const q = questions[current];
-      document.getElementById("question").textContent = q.aspect;
-      const optionsDiv = document.getElementById("options");
-      optionsDiv.innerHTML = "";
+    /* ===== Build UI ===== */
+    const filterEl = document.getElementById('filter');
+    const amountEl = document.getElementById('amount');
+    const quizEl = document.getElementById('quiz');
+    const scoreEl = document.getElementById('score');
+    const summaryEl = document.getElementById('summary');
 
-      // Shuffle tijdvakken
-      const shuffled = [...tijdvakken].sort(() => Math.random() - 0.5);
-      shuffled.forEach(tv => {
-        const btn = document.createElement("button");
-        btn.textContent = tv;
-        btn.onclick = () => checkAnswer(tv);
-        optionsDiv.appendChild(btn);
+    // Fill dropdowns
+    TIJDVAKKEN.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id; opt.textContent = `${t.id}. ${t.naam}`; filterEl.appendChild(opt);
+    });
+
+    const tvList = document.getElementById('tvList');
+    TIJDVAKKEN.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'kv-item';
+      div.textContent = `${t.id}. ${t.naam}`;
+      tvList.appendChild(div);
+    });
+
+    function buildOptions(){
+      const frag = document.createDocumentFragment();
+      const opt0 = document.createElement('option');
+      opt0.value = ''; opt0.textContent = '— kies tijdvak —';
+      frag.appendChild(opt0);
+      TIJDVAKKEN.forEach(t=>{
+        const o = document.createElement('option');
+        o.value = t.id; o.textContent = `${t.id}. ${t.naam}`;
+        frag.appendChild(o);
       });
-      document.getElementById("feedback").textContent = "";
+      return frag;
     }
 
-    function checkAnswer(selected) {
-      const correct = questions[current].answer;
-      if (selected === correct) {
-        document.getElementById("feedback").textContent = "✅ Goed!";
-        score++;
-      } else {
-        document.getElementById("feedback").textContent = "❌ Fout! Het juiste antwoord is: " + correct;
+    let currentSet = [];
+
+    function buildQuiz(){
+      quizEl.innerHTML = '';
+      const amount = Math.min(Math.max(parseInt(amountEl.value||'12',10),5), ASPECTEN.length);
+      const restrict = parseInt(filterEl.value||'');
+      const pool = ASPECTEN.filter(x => restrict ? x.tv === restrict : true);
+      currentSet = shuffle(pool).slice(0, amount);
+
+      currentSet.forEach((item, idx) => {
+        const q = document.createElement('article');
+        q.className = 'q';
+        q.innerHTML = `
+          <h3>${idx+1}. ${item.a}</h3>
+          <div class="row">
+            <div class="meta">Kenmerkend aspect • Kies het bijbehorende tijdvak (1–10)</div>
+            <div>
+              <label class="visually-hidden" for="sel-${idx}">Tijdvak</label>
+              <select id="sel-${idx}" data-ans="${item.tv}"></select>
+            </div>
+          </div>
+          <div class="result" id="res-${idx}"></div>
+        `;
+        q.querySelector('select').appendChild(buildOptions());
+        quizEl.appendChild(q);
+      });
+
+      summaryEl.classList.remove('hidden');
+      scoreEl.textContent = `0/${currentSet.length} goed`;
+    }
+
+    function checkAnswers(showCorrect=false){
+      let good=0;
+      $all('.q').forEach((q,i)=>{
+        const sel = q.querySelector('select');
+        const res = q.querySelector('.result');
+        const correct = parseInt(sel.dataset.ans,10);
+        const val = parseInt(sel.value||'0',10);
+        if(!val){
+          res.textContent = showCorrect ? `Nog geen keuze. Juist tijdvak: ${correct}. ${TIJDVAKKEN.find(t=>t.id===correct).naam}` : 'Maak een keuze.';
+          res.className = 'result warn';
+        } else if(val===correct){
+          res.textContent = '✔️ Goed!';
+          res.className = 'result good';
+          good++;
+        } else {
+          const tip = TIJDVAKKEN.find(t=>t.id===correct).naam;
+          res.textContent = showCorrect ? `✖️ Fout. Juist: ${correct}. ${tip}` : '✖️ Fout.';
+          res.className = 'result bad';
+        }
+      });
+      scoreEl.textContent = `${good}/${currentSet.length} goed`;
+    }
+
+    // Buttons
+    document.getElementById('start').addEventListener('click', buildQuiz);
+    document.getElementById('retry').addEventListener('click', buildQuiz);
+    document.getElementById('check').addEventListener('click', () => checkAnswers(false));
+    document.getElementById('showAnswers').addEventListener('click', () => checkAnswers(true));
+    document.getElementById('reset').addEventListener('click', () => {$all('.q select').forEach(s=>s.value=''); $all('.result').forEach(r=>r.textContent=''); scoreEl.textContent = `0/${currentSet.length} goed`;});
+
+    // First render
+    buildQuiz();
+
+    // Accessibility: allow Enter to jump to next question
+    document.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter' && e.target.tagName==='SELECT'){
+        const selects = $all('.q select');
+        const idx = selects.indexOf(e.target);
+        const next = selects[idx+1];
+        if(next){ next.focus(); }
       }
-      document.getElementById("score").textContent = `Score: ${score} / ${current+1}`;
-    }
-
-    function nextQuestion() {
-      current++;
-      if (current < questions.length) {
-        loadQuestion();
-      } else {
-        document.getElementById("question").textContent = "Klaar!";
-        document.getElementById("options").innerHTML = "";
-        document.getElementById("feedback").textContent = "Je hebt de quiz afgerond.";
-      }
-    }
-
-    // Start
-    loadQuestion();
+    });
   </script>
 </body>
 </html>
