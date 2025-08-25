@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz: Kenmerkende Aspecten & Tijdvakken</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      text-align: center;
+      padding: 20px;
+    }
+    .quiz-box {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #0077cc;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #005fa3;
+    }
+    #feedback {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-box">
+    <h2>Koppel het kenmerkende aspect aan het juiste tijdvak</h2>
+    <p id="question"></p>
+    <div id="options"></div>
+    <p id="feedback"></p>
+    <button onclick="nextQuestion()">Volgende vraag</button>
+    <p id="score"></p>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        aspect: "De levenswijze van jagers-verzamelaars",
+        answer: "Tijdvak 1: Jagers en Boeren"
+      },
+      {
+        aspect: "De opkomst van handel en ambacht die de basis legde voor het herleven van een agrarisch-urbane samenleving",
+        answer: "Tijdvak 4: Steden en Staten"
+      },
+      {
+        aspect: "De wetenschappelijke revolutie",
+        answer: "Tijdvak 6: Regenten en Vorsten"
+      },
+      {
+        aspect: "De industriële revolutie die in de westerse wereld de basis legde voor een industriële samenleving",
+        answer: "Tijdvak 8: Burgers en Stoommachines"
+      },
+      {
+        aspect: "Het voeren van twee wereldoorlogen",
+        answer: "Tijdvak 9: De Wereldoorlogen"
+      },
+      {
+        aspect: "De ontwikkeling van het jodendom en het christendom als de eerste monotheïstische godsdiensten",
+        answer: "Tijdvak 2: Grieken en Romeinen"
+      },
+      {
+        aspect: "De eenwording van Europa",
+        answer: "Tijdvak 10: Televisie en Computer"
+      }
+    ];
+
+    const tijdvakken = [
+      "Tijdvak 1: Jagers en Boeren",
+      "Tijdvak 2: Grieken en Romeinen",
+      "Tijdvak 3: Monniken en Ridders",
+      "Tijdvak 4: Steden en Staten",
+      "Tijdvak 5: Ontdekkers en Hervormers",
+      "Tijdvak 6: Regenten en Vorsten",
+      "Tijdvak 7: Pruiken en Revoluties",
+      "Tijdvak 8: Burgers en Stoommachines",
+      "Tijdvak 9: De Wereldoorlogen",
+      "Tijdvak 10: Televisie en Computer"
+    ];
+
+    let current = 0;
+    let score = 0;
+
+    function loadQuestion() {
+      const q = questions[current];
+      document.getElementById("question").textContent = q.aspect;
+      const optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+
+      // Shuffle tijdvakken
+      const shuffled = [...tijdvakken].sort(() => Math.random() - 0.5);
+      shuffled.forEach(tv => {
+        const btn = document.createElement("button");
+        btn.textContent = tv;
+        btn.onclick = () => checkAnswer(tv);
+        optionsDiv.appendChild(btn);
+      });
+      document.getElementById("feedback").textContent = "";
+    }
+
+    function checkAnswer(selected) {
+      const correct = questions[current].answer;
+      if (selected === correct) {
+        document.getElementById("feedback").textContent = "✅ Goed!";
+        score++;
+      } else {
+        document.getElementById("feedback").textContent = "❌ Fout! Het juiste antwoord is: " + correct;
+      }
+      document.getElementById("score").textContent = `Score: ${score} / ${current+1}`;
+    }
+
+    function nextQuestion() {
+      current++;
+      if (current < questions.length) {
+        loadQuestion();
+      } else {
+        document.getElementById("question").textContent = "Klaar!";
+        document.getElementById("options").innerHTML = "";
+        document.getElementById("feedback").textContent = "Je hebt de quiz afgerond.";
+      }
+    }
+
+    // Start
+    loadQuestion();
+  </script>
+</body>
+</html>
